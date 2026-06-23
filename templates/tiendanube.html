@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Tienda Nube{% endblock %}
+{% block content %}
+{% if not token_configured %}
+<div class="bg-yellow-900/50 border border-yellow-800 rounded-xl p-6 mb-6">
+    <h2 class="text-lg font-semibold text-yellow-200 mb-2">⚠️ Token de API no configurado</h2>
+    <p class="text-sm text-yellow-300/70">
+        Configurá <code class="bg-gray-800 px-1 rounded">TN_ACCESS_TOKEN</code> en el archivo <code class="bg-gray-800 px-1 rounded">.env</code>
+        para usar las funciones de Tienda Nube.
+    </p>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        {% if stats and stats.success %}
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 class="text-lg font-semibold mb-4">☁️ Tienda Nube — Estado</h2>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-amber-400">{{ stats.total }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Productos</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-green-400">{{ stats.published }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Publicados</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-blue-400">{{ stats.with_price }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Con Precio</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 class="text-lg font-semibold mb-4">📥 Exportar IDs</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Descarga los IDs de todos los productos de Tienda Nube y genera el
+                archivo de sincronización de precios.
+            </p>
+            <form method="POST" action="{{ url_for('tiendanube_export_ids') }}" onsubmit="return confirm('Exportar IDs de todos los productos desde Tienda Nube?')">
+                <button type="submit" {% if not token_configured %}disabled{% endif %}
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 rounded-lg transition-colors">
+                    🔄 Exportar IDs y generar sync
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 class="text-lg font-semibold mb-4">💲 Sincronizar Precios</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                {% if pending_updates > 0 %}
+                    <span class="text-green-400 font-medium">{{ pending_updates }} productos</span> con precio nuevo pendiente.
+                {% else %}
+                    No hay precios nuevos pendientes. Editá el archivo sync o usá "Prefill desde catálogo".
+                {% endif %}
+            </p>
+
+            <div class="space-y-3">
+                <form method="POST" action="{{ url_for('tiendanube_sync_prices') }}" onsubmit="return confirmSync()">
+                    <button type="submit" {% if not has_mapping or not token_configured %}disabled{% endif %}
+                            class="w-full py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-gray-800 disabled:text-gray-600 rounded-lg transition-colors">
+                        💾 Sincronizar precios a Tienda Nube
+                    </button>
+                </form>
+
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('tiendanube_sync_file') }}"
+                       class="flex-1 text-center py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors">
+                        ✏️ Editar sync
+                    </a>
+                    <form method="POST" action="{{ url_for('tiendanube_sync_file_prefill') }}" class="flex-1">
+                        <button type="submit"
+                                class="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm transition-colors">
+                            📋 Prefill desde catálogo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 class="text-lg font-semibold mb-4">📦 Archivos</h2>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">mapping_tn_ids.csv</span>
+                    <a href="{{ url_for('download_file', filename='mapping_tn_ids.csv') }}" class="text-amber-400 hover:text-amber-300">↓</a>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">productos_sync.csv</span>
+                    <a href="{{ url_for('download_file', filename='productos_sync.csv') }}" class="text-amber-400 hover:text-amber-300">↓</a>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">productos_jgo_armeria_unificado.csv</span>
+                    <a href="{{ url_for('download_file', filename='productos_jgo_armeria_unificado.csv') }}" class="text-amber-400 hover:text-amber-300">↓</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+            <h2 class="text-lg font-semibold mb-4">📖 Cómo usar</h2>
+            <ol class="space-y-3 text-sm text-gray-400">
+                <li class="flex items-start space-x-2">
+                    <span class="text-amber-400 font-bold">1.</span>
+                    <span>Exportá IDs desde TN</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-amber-400 font-bold">2.</span>
+                    <span>Descargá el sync.csv y editá precios</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-amber-400 font-bold">3.</span>
+                    <span>O usá "Prefill" para auto-completar</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-amber-400 font-bold">4.</span>
+                    <span>Sincronizá a Tienda Nube</span>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmSync() {
+    return confirm('Sincronizar precios con Tienda Nube? Esto actualizará los productos en la tienda.');
+}
+</script>
+{% endblock %}

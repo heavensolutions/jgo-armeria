@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Procesar Listas{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 class="text-lg font-semibold mb-4">⚙️ Procesar Listas de Precios</h2>
+
+        <div class="space-y-3 mb-6">
+            <div class="flex items-center justify-between py-2">
+                <span class="text-sm">📄 Catálogo base (productos_jgo_armeria.csv)</span>
+                {% if base_ok %}<span class="text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">✓</span>
+                {% else %}<span class="text-xs text-red-400">✗ No encontrado</span>{% endif %}
+            </div>
+            <div class="flex items-center justify-between py-2 border-t border-gray-800">
+                <span class="text-sm">📄 Taurus PDF</span>
+                {% if taurus_ok %}<span class="text-xs text-green-400">✓ {{ uploads.taurus_pdf.name }}</span>
+                {% else %}<span class="text-xs text-gray-600">— Opcional</span>{% endif %}
+            </div>
+            <div class="flex items-center justify-between py-2 border-t border-gray-800">
+                <span class="text-sm">📄 Bersa PDF</span>
+                {% if bersa_ok %}<span class="text-xs text-green-400">✓ {{ uploads.bersa_pdf.name }}</span>
+                {% else %}<span class="text-xs text-gray-600">— Opcional</span>{% endif %}
+            </div>
+            <div class="flex items-center justify-between py-2 border-t border-gray-800">
+                <span class="text-sm">📊 Bersa Shop XLSX</span>
+                {% if bersa_shop_ok %}<span class="text-xs text-green-400">✓ {{ uploads.bersa_shop_xlsx.name }}</span>
+                {% else %}<span class="text-xs text-gray-600">— Opcional</span>{% endif %}
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('process_run') }}" onsubmit="return confirmProcess()">
+            <button type="submit" {% if not ready %}disabled{% endif %}
+                    class="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-800 disabled:text-gray-600
+                           rounded-lg font-medium transition-colors text-lg">
+                🚀 Procesar y Unificar
+            </button>
+            {% if not ready %}
+                <p class="text-xs text-gray-600 text-center mt-2">Subí al menos una lista de precios para procesar</p>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 class="text-lg font-semibold mb-4">📋 Último Reporte</h2>
+        {% if report %}
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500">Productos</span><span>{{ report.total_productos }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Con precio</span><span class="text-green-400">{{ report.con_precio }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Sin precio</span><span class="text-red-400">{{ report.sin_precio }}</span></div>
+                <div class="border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-gray-500 text-xs">Categorías:</span>
+                    {% for cat, count in (report.por_categoria or {}).items() %}
+                        <div class="flex justify-between text-xs mt-1">
+                            <span>{{ cat[:30] }}{% if cat|length > 30 %}…{% endif %}</span>
+                            <span class="text-gray-400">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-sm">No hay reportes previos.</p>
+        {% endif %}
+        <a href="{{ url_for('process_result') }}" class="mt-4 inline-block text-sm text-amber-400 hover:text-amber-300">
+            Ver resultado completo →
+        </a>
+    </div>
+</div>
+
+<script>
+function confirmProcess() {
+    return confirm('¿Procesar las listas de precios ahora? Esto puede tomar unos segundos.');
+}
+</script>
+{% endblock %}

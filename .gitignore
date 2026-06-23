@@ -1,0 +1,29 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+*.pyo
+
+# Credentials (contains API tokens!)
+tiendanube_credentials.md
+
+# Uploads & outputs
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Images are tracked (part of the project data)
+# But we don't need to track generated ones
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Virtual env
+venv/
+.venv/

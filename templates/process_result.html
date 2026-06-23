@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Resultado del Procesamiento{% endblock %}
+{% block content %}
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-6">
+    <h2 class="text-lg font-semibold mb-4">✅ Resultado del Procesamiento</h2>
+    {% if report %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-amber-400">{{ report.total_productos }}</div>
+                <div class="text-xs text-gray-500 mt-1">Total Productos</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-green-400">{{ report.con_precio }}</div>
+                <div class="text-xs text-gray-500 mt-1">Con Precio</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold {% if report.sin_precio > 0 %}text-red-400{% else %}text-green-400{% endif %}">{{ report.sin_precio }}</div>
+                <div class="text-xs text-gray-500 mt-1">Sin Precio</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-blue-400">{{ outputs|length }}</div>
+                <div class="text-xs text-gray-500 mt-1">Archivos</div>
+            </div>
+        </div>
+
+        <h3 class="text-sm font-medium text-gray-400 mb-3">📂 Categorías</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {% for cat, count in (report.por_categoria or {}).items() %}
+                <div class="flex justify-between bg-gray-800/50 rounded px-3 py-2 text-sm">
+                    <span>{{ cat }}</span>
+                    <span class="text-gray-400 font-medium">{{ count }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-600">No hay resultados. Ejecutá el procesamiento primero.</p>
+    {% endif %}
+</div>
+
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold mb-4">📦 Archivos Generados</h2>
+    {% if outputs %}
+        <div class="space-y-2">
+            {% for f in outputs %}
+                <div class="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg">
+                            {% if f.name.endswith('.csv') %}📄{% elif f.name.endswith('.json') %}📋{% else %}📦{% endif %}
+                        </span>
+                        <div>
+                            <div class="text-sm font-medium">{{ f.name }}</div>
+                            <div class="text-xs text-gray-600">
+                                {{ (f.size / 1024)|round(1) }} KB · {{ f.modified[:10] }}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('download_file', filename=f.name) }}"
+                       class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 rounded text-sm transition-colors">
+                        Descargar
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-600 text-center py-8">No hay archivos generados todavía.</p>
+    {% endif %}
+    <div class="mt-4 flex space-x-3">
+        <a href="{{ url_for('process_page') }}" class="text-sm bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">
+            ← Volver a procesar
+        </a>
+        <a href="{{ url_for('tiendanube') }}" class="text-sm bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-lg transition-colors">
+            ☁️ Ir a Tienda Nube
+        </a>
+    </div>
+</div>
+{% endblock %}

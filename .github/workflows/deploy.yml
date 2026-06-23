@@ -1,0 +1,67 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: 📂 Rsync project to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            mkdir -p /home/${{ secrets.VPS_USER }}/jgo-armeria
+          "
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude '__pycache__' \
+            --exclude '*.pyc' \
+            --exclude '.env' \
+            --exclude 'uploads/' \
+            --exclude 'outputs/' \
+            --exclude 'venv/' \
+            --exclude '.venv/' \
+            ./ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/${{ secrets.VPS_USER }}/jgo-armeria/
+
+      - name: 🐍 Setup Python & Restart Service
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd /home/${{ secrets.VPS_USER }}/jgo-armeria
+
+            # Create virtual env if missing
+            if [ ! -d venv ]; then
+              python3 -m venv venv
+            fi
+
+            # Activate and install dependencies
+            source venv/bin/activate
+            pip install -r requirements.txt --quiet
+
+            # Create runtime directories
+            mkdir -p uploads outputs
+
+            # Copy .env from secure location if exists
+            if [ -f /home/${{ secrets.VPS_USER }}/.env.jgo ]; then
+              cp /home/${{ secrets.VPS_USER }}/.env.jgo .env
+            fi
+
+            # Restart the service
+            sudo systemctl restart jgo-armeria 2>/dev/null || echo 'Service not yet installed — run setup.sh first'
+          "
+
+      - name: ✅ Health check
+        run: |
+          sleep 3
+          curl -sSf https://jgo.lucasfuentes.com/api/status || echo 'Warning: health check failed (may take a moment)'

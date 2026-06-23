@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Archivos Generados{% endblock %}
+{% block content %}
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold">📦 Archivos Generados</h2>
+        {% if files %}
+            <form method="POST" action="{{ url_for('outputs_clean') }}" class="inline">
+                <button type="submit" onclick="return confirm('Eliminar todos los archivos de salida?')"
+                        class="text-sm text-red-400 hover:text-red-300">
+                    🗑️ Limpiar
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if files %}
+        <div class="space-y-2">
+            {% for f in files %}
+                <div class="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-3 hover:bg-gray-800 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg">
+                            {% if f.name.endswith('.csv') %}📄
+                            {% elif f.name.endswith('.json') %}📋
+                            {% else %}📦{% endif %}
+                        </span>
+                        <div>
+                            <div class="text-sm font-medium">{{ f.name }}</div>
+                            <div class="text-xs text-gray-500">
+                                {{ (f.size / 1024)|round(1) }} KB
+                                {% if f.name.endswith('.csv') and report %}
+                                    · {{ report.total_productos }} productos
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('download_file', filename=f.name) }}"
+                       class="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 rounded text-sm transition-colors font-medium">
+                        Descargar
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12 text-gray-600">
+            <div class="text-5xl mb-4">📭</div>
+            <p>No hay archivos generados.</p>
+            <p class="text-sm mt-2">Subí listas de precios y ejecutá el procesamiento.</p>
+            <a href="{{ url_for('process_page') }}" class="mt-4 inline-block text-amber-400 hover:text-amber-300">
+                ⚙️ Ir a Procesar →
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% if report %}
+    <div class="mt-6 bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 class="text-lg font-semibold mb-4">📊 Resumen del Catálogo</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-amber-400">{{ report.total_productos }}</div>
+                <div class="text-xs text-gray-500 mt-1">Total</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-green-400">{{ report.con_precio }}</div>
+                <div class="text-xs text-gray-500 mt-1">Con Precio</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold {% if report.sin_precio > 0 %}text-red-400{% else %}text-green-400{% endif %}">{{ report.sin_precio }}</div>
+                <div class="text-xs text-gray-500 mt-1">Sin Precio</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-blue-400">{{ (report.por_categoria or {})|length }}</div>
+                <div class="text-xs text-gray-500 mt-1">Categorías</div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

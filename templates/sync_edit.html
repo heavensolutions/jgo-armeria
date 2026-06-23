@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Editar Sync{% endblock %}
+{% block content %}
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold">✏️ Editar Sincronización de Precios</h2>
+        <div class="space-x-2">
+            <a href="{{ url_for('download_file', filename='productos_sync.csv') }}"
+               class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-sm transition-colors">
+                📥 Descargar CSV
+            </a>
+            <a href="{{ url_for('tiendanube') }}"
+               class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded text-sm transition-colors">
+                ← Volver
+            </a>
+        </div>
+    </div>
+
+    {% if rows %}
+        <div class="overflow-x-auto">
+            <form method="POST" action="{{ url_for('tiendanube_sync_file_update') }}">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-700 text-left">
+                            <th class="py-2 px-2 text-gray-500 font-medium">SKU</th>
+                            <th class="py-2 px-2 text-gray-500 font-medium">Nombre</th>
+                            <th class="py-2 px-2 text-gray-500 font-medium text-right">Precio Actual</th>
+                            <th class="py-2 px-2 text-gray-500 font-medium text-right">Stock</th>
+                            <th class="py-2 px-2 text-gray-500 font-medium text-right">Nuevo Precio</th>
+                            <th class="py-2 px-2 text-gray-500 font-medium text-right">Nuevo Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr class="border-b border-gray-800 hover:bg-gray-800/30">
+                                <td class="py-2 px-2 text-gray-400 font-mono text-xs">{{ row.sku }}</td>
+                                <td class="py-2 px-2 max-w-xs truncate" title="{{ row.nombre }}">{{ row.nombre[:40] }}{% if row.nombre|length > 40 %}…{% endif %}</td>
+                                <td class="py-2 px-2 text-right">{{ row.precio_actual }}</td>
+                                <td class="py-2 px-2 text-right">{{ row.stock_actual }}</td>
+                                <td class="py-2 px-2 text-right">
+                                    <input type="text" name="price_{{ row.tn_id }}"
+                                           value="{{ row.precio_nuevo }}"
+                                           class="w-24 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-right text-sm
+                                                  focus:ring-1 focus:ring-amber-500 focus:border-transparent
+                                                  {{ 'text-green-400' if row.precio_nuevo else 'text-gray-100' }}"
+                                           placeholder="—">
+                                </td>
+                                <td class="py-2 px-2 text-right">
+                                    <input type="text" name="stock_{{ row.tn_id }}"
+                                           value="{{ row.stock_nuevo }}"
+                                           class="w-16 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-right text-sm
+                                                  focus:ring-1 focus:ring-amber-500 focus:border-transparent
+                                                  {{ 'text-green-400' if row.stock_nuevo else 'text-gray-100' }}"
+                                           placeholder="—">
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="mt-6 flex justify-between items-center">
+                    <span class="text-sm text-gray-500">{{ rows|length }} productos</span>
+                    <button type="submit" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 rounded-lg font-medium transition-colors">
+                        💾 Guardar cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <p class="text-center text-gray-600 py-8">
+            No hay datos de sincronización.
+            <a href="{{ url_for('tiendanube') }}" class="text-amber-400 hover:text-amber-300">Exportá IDs primero</a>.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <div class="text-gray-500 text-xs uppercase tracking-wide">Listas Subidas</div>
+        <div class="text-2xl font-bold mt-1">
+            {{ (1 if uploads.taurus_pdf else 0) + (1 if uploads.bersa_pdf else 0) + (1 if uploads.bersa_shop_xlsx else 0) + (1 if uploads.lube_pdf else 0) }}/4
+        </div>
+        <div class="text-xs text-gray-600 mt-1">
+            Taurus · Bersa · Bersa Shop · Lube
+        </div>
+    </div>
+    <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <div class="text-gray-500 text-xs uppercase tracking-wide">Productos Catálogo</div>
+        <div class="text-2xl font-bold mt-1">{{ report.total_productos if report else '—' }}</div>
+        <div class="text-xs text-gray-600 mt-1">
+            {% if report %}{{ report.con_precio }} con precio · {{ report.sin_precio }} sin{% endif %}
+        </div>
+    </div>
+    <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <div class="text-gray-500 text-xs uppercase tracking-wide">Archivos Generados</div>
+        <div class="text-2xl font-bold mt-1">{{ outputs|length }}</div>
+        <div class="text-xs text-gray-600 mt-1">CSV listos para descargar</div>
+    </div>
+    <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <div class="text-gray-500 text-xs uppercase tracking-wide">Tienda Nube</div>
+        <div class="text-2xl font-bold mt-1">
+            {% if tn_configured %}
+                <span class="text-green-400">✓</span>
+            {% else %}
+                <span class="text-red-400">✗</span>
+            {% endif %}
+        </div>
+        <div class="text-xs text-gray-600 mt-1">
+            {{ 'Conectado' if tn_configured else 'Sin token' }}
+            {% if has_mapping %} · Sync listo{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+        <h2 class="text-lg font-semibold mb-4">📤 Listas de Precios</h2>
+        <div class="space-y-3">
+            {% set upload_map = {
+                'taurus_pdf': ('Taurus (PDF)', 'Taurus'),
+                'bersa_pdf': ('Bersa (PDF)', 'Bersa'),
+                'bersa_shop_xlsx': ('Bersa Shop (XLSX)', 'Bersa Shop'),
+                'lube_pdf': ('Lube (PDF)', 'Lube'),
+            } %}
+            {% for key, (label, icon) in upload_map.items() %}
+                <div class="flex items-center justify-between py-1">
+                    <span class="text-sm">{{ icon }} {{ label }}</span>
+                    {% if uploads.get(key) %}
+                        <span class="text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">
+                            {{ uploads[key].name }}
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-gray-600">—</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('upload') }}" class="mt-4 inline-block text-sm text-amber-400 hover:text-amber-300">
+            Subir archivos →
+        </a>
+    </div>
+
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+        <h2 class="text-lg font-semibold mb-4">📊 Último Reporte</h2>
+        {% if report %}
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500">Productos</span><span>{{ report.total_productos }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Con precio</span><span>{{ report.con_precio }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Sin precio</span><span class="{{ 'text-red-400' if report.sin_precio > 0 else 'text-green-400' }}">{{ report.sin_precio }}</span></div>
+                <div class="border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-gray-500 text-xs">Categorías:</span>
+                    {% for cat, count in (report.por_categoria or {}).items() %}
+                        <div class="flex justify-between text-xs mt-1">
+                            <span>{{ cat }}</span>
+                            <span class="text-gray-400">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-sm">No hay reportes todavía. Subí listas y procesá.</p>
+        {% endif %}
+        <div class="mt-4 space-x-2">
+            <a href="{{ url_for('process_page') }}" class="text-sm bg-amber-600 hover:bg-amber-500 px-4 py-1.5 rounded-lg transition-colors inline-block">
+                ⚙️ Procesar ahora
+            </a>
+            {% if outputs %}
+                <a href="{{ url_for('outputs') }}" class="text-sm bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg transition-colors inline-block">
+                    📦 Ver salidas
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <h2 class="text-lg font-semibold mb-4">🚀 Flujo de Trabajo</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+            <div class="text-amber-400 font-bold mb-1">1. Subir listas</div>
+            <div class="text-gray-500">PDF Taurus, Bersa, Lube + XLSX Bersa Shop</div>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+            <div class="text-amber-400 font-bold mb-1">2. Procesar</div>
+            <div class="text-gray-500">Extrae precios y unifica catálogo</div>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+            <div class="text-amber-400 font-bold mb-1">3. Descargar CSV</div>
+            <div class="text-gray-500">Catálogo listo para importar a TN</div>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+            <div class="text-amber-400 font-bold mb-1">4. Sincronizar</div>
+            <div class="text-gray-500">Subir precios directo a Tienda Nube</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

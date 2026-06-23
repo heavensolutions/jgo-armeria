@@ -1,0 +1,20 @@
+{
+  "total_productos": 507,
+  "con_precio": 507,
+  "sin_precio": 0,
+  "por_categoria": {
+    "Accesorios > AR-15 / BAR9": 58,
+    "Accesorios > Canik": 9,
+    "Accesorios > Repuestos y Partes": 183,
+    "Armas > Escopetas": 5,
+    "Armas > Pistolas": 51,
+    "Armas > Revolveres": 10,
+    "Cuchillos y Navajas": 1,
+    "Linternas": 100,
+    "Merchandising": 1,
+    "Miras y Red Dots": 20,
+    "Municiones y Snap Caps": 21,
+    "Proteccion Auditiva": 48
+  },
+  "productos_sin_precio": []
+}

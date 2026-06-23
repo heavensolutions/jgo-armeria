@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Subir Listas{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 class="text-lg font-semibold mb-4">📤 Subir Listas de Precios</h2>
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div class="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-amber-500/50 transition-colors">
+                <input type="file" name="files" multiple
+                       accept=".pdf,.xlsx,.xls,.csv"
+                       class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4
+                              file:rounded-lg file:border-0 file:text-sm file:font-medium
+                              file:bg-amber-600 file:text-white
+                              hover:file:bg-amber-500
+                              cursor-pointer">
+                <p class="text-xs text-gray-600 mt-2">PDF · XLSX · XLS · CSV (máx 50 MB)</p>
+                <p class="text-xs text-gray-600 mt-1">Subí todos los archivos que quieras de una</p>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 rounded-lg font-medium transition-colors">
+                Subir Archivos
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+        <h2 class="text-lg font-semibold mb-4">📋 Archivos Actuales</h2>
+        {% if files.taurus_pdf or files.bersa_pdf or files.bersa_shop_xlsx or files.lube_pdf or files.unknown %}
+            <div class="space-y-3">
+                {% macro file_line(key, label, icon) %}
+                    {% if files.get(key) %}
+                        <div class="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
+                            <div class="flex items-center space-x-2">
+                                <span>{{ icon }}</span>
+                                <span class="text-sm">{{ label }}</span>
+                                <span class="text-xs text-gray-600">{{ files[key].name }}</span>
+                            </div>
+                            <span class="text-xs text-green-400">✓</span>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center justify-between bg-gray-800/30 rounded-lg px-3 py-2 opacity-50">
+                            <span class="text-sm text-gray-600">{{ icon }} {{ label }}</span>
+                            <span class="text-xs text-gray-700">—</span>
+                        </div>
+                    {% endif %}
+                {% endmacro %}
+
+                {{ file_line('taurus_pdf', 'Taurus (PDF)', '📄') }}
+                {{ file_line('bersa_pdf', 'Bersa (PDF)', '📄') }}
+                {{ file_line('bersa_shop_xlsx', 'Bersa Shop (XLSX)', '📊') }}
+                {{ file_line('lube_pdf', 'Lube (PDF)', '📄') }}
+
+                {% if files.unknown %}
+                    <div class="border-t border-gray-800 pt-3 mt-3">
+                        <span class="text-xs text-gray-600">Otros archivos:</span>
+                        {% for f in files.unknown %}
+                            <div class="text-xs text-gray-500 mt-1">{{ f }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="POST" action="{{ url_for('upload_clear') }}" class="mt-4">
+                <button type="submit" onclick="return confirm('Eliminar todos los archivos subidos?')"
+                        class="text-sm text-red-400 hover:text-red-300">
+                    🗑️ Limpiar todo
+                </button>
+            </form>
+        {% else %}
+            <div class="text-center py-8 text-gray-600">
+                <div class="text-4xl mb-3">📭</div>
+                <p>No hay archivos subidos todavía.</p>
+                <p class="text-xs mt-2">Subí PDFs de Taurus, Bersa, Lube o el XLSX de Bersa Shop</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-6 bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <h2 class="text-lg font-semibold mb-3">📌 Formatos esperados</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div class="bg-gray-800/50 rounded-lg p-3">
+            <span class="text-amber-400 font-medium">Taurus:</span>
+            <code class="text-gray-500 ml-2">LISTA DE PRECIOS - TAURUS ... .pdf</code>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3">
+            <span class="text-amber-400 font-medium">Bersa:</span>
+            <code class="text-gray-500 ml-2">LISTA DE PRECIOS BERSA ... .pdf</code>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3">
+            <span class="text-amber-400 font-medium">Bersa Shop:</span>
+            <code class="text-gray-500 ml-2">LISTA BERSA SHOP ... .xlsx</code>
+        </div>
+        <div class="bg-gray-800/50 rounded-lg p-3">
+            <span class="text-amber-400 font-medium">Lube:</span>
+            <code class="text-gray-500 ml-2">LISTAS DE PRECIOS LUBE ... .pdf</code>
+        </div>
+    </div>
+    <p class="text-xs text-gray-600 mt-4">
+        El sistema detecta automáticamente el tipo de archivo por el nombre.
+        No es necesario subir todos, solo los que tengas.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JGO Armería — {% block title %}Panel{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .flash-msg { transition: opacity 0.5s; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <nav class="bg-gray-900 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('dashboard') }}" class="text-lg font-bold text-amber-400 tracking-wide">
+                        🔫 JGO Armería
+                    </a>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded text-sm hover:bg-gray-800 {{ 'bg-gray-800 text-amber-300' if request.endpoint == 'dashboard' else 'text-gray-400' }}">
+                            📊 Dashboard
+                        </a>
+                        <a href="{{ url_for('upload') }}" class="px-3 py-2 rounded text-sm hover:bg-gray-800 {{ 'bg-gray-800 text-amber-300' if request.endpoint == 'upload' else 'text-gray-400' }}">
+                            📤 Subir Listas
+                        </a>
+                        <a href="{{ url_for('process_page') }}" class="px-3 py-2 rounded text-sm hover:bg-gray-800 {{ 'bg-gray-800 text-amber-300' if request.endpoint in ('process_page', 'process_result') else 'text-gray-400' }}">
+                            ⚙️ Procesar
+                        </a>
+                        <a href="{{ url_for('outputs') }}" class="px-3 py-2 rounded text-sm hover:bg-gray-800 {{ 'bg-gray-800 text-amber-300' if request.endpoint == 'outputs' else 'text-gray-400' }}">
+                            📦 Resultados
+                        </a>
+                        <a href="{{ url_for('tiendanube') }}" class="px-3 py-2 rounded text-sm hover:bg-gray-800 {{ 'bg-gray-800 text-amber-300' if request.endpoint == 'tiendanube' else 'text-gray-400' }}">
+                            ☁️ Tienda Nube
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 text-sm">
+                    {% if session.get('authenticated') %}
+                        <span class="text-gray-500">{{ session.get('username', 'admin') }}</span>
+                        <a href="{{ url_for('logout') }}" class="px-3 py-1.5 bg-gray-800 rounded hover:bg-gray-700 text-gray-400">Salir</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="space-y-2 mb-6">
+                    {% for category, message in messages %}
+                        <div class="flash-msg px-4 py-3 rounded-lg text-sm border
+                            {% if category == 'error' %}bg-red-900/50 border-red-800 text-red-200
+                            {% elif category == 'success' %}bg-green-900/50 border-green-800 text-green-200
+                            {% elif category == 'warning' %}bg-yellow-900/50 border-yellow-800 text-yellow-200
+                            {% else %}bg-blue-900/50 border-blue-800 text-blue-200{% endif %}">
+                            {{ message }}
+                            <button onclick="this.parentElement.remove()" class="float-right opacity-60 hover:opacity-100">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center py-6 text-gray-700 text-xs">
+        JGO Armería &middot; {{ now.year if now else '' }}
+    </footer>
+</body>
+</html>
