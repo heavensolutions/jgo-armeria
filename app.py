@@ -30,6 +30,37 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "jgo-armeria-dev-key-change-me")
 
+# -----------------------------------------------------------
+# WSGI middleware — Passenger sometimes sends empty PATH_INFO
+# for the root URL ("") instead of "/", breaking Flask routing.
+# -----------------------------------------------------------
+
+class _PassengerPathFix:
+    """Normalize PATH_INFO so Flask matches the '/' route."""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '')
+        script = environ.get('SCRIPT_NAME', '')
+        # Debug: log what Passenger sends
+        print(f"[wsgi] SCRIPT_NAME={script!r} PATH_INFO={path!r}", flush=True)
+        if not path or path == '':
+            environ['PATH_INFO'] = '/'
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = _PassengerPathFix(app.wsgi_app)
+
+# -----------------------------------------------------------
+# Debug hook
+# -----------------------------------------------------------
+
+@app.before_request
+def log_request():
+    from flask import request
+    print(f"[request] method={request.method} path={request.path!r} "
+          f"script_root={request.script_root!r} full_path={request.full_path!r}",
+          flush=True)
+
 # Auth config
 APP_USERNAME = os.getenv("APP_USERNAME", "admin")
 APP_PASSWORD = os.getenv("APP_PASSWORD", "changeme123")
