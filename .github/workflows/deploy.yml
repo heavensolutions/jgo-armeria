@@ -2,7 +2,7 @@ name: Deploy to VPS via FTP
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
