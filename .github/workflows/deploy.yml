@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy to VPS via FTP
 
 on:
   push:
@@ -13,55 +13,44 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔐 Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: 🔧 Create .env from secrets
+        run: |
+          cat > .env << EOF
+          FLASK_SECRET_KEY=${{ secrets.FLASK_SECRET_KEY }}
+          FLASK_DEBUG=false
+          APP_USERNAME=${{ secrets.APP_USERNAME }}
+          APP_PASSWORD=${{ secrets.APP_PASSWORD }}
+          TN_STORE_ID=${{ secrets.TN_STORE_ID }}
+          TN_ACCESS_TOKEN=${{ secrets.TN_ACCESS_TOKEN }}
+          TN_USER_AGENT=JGOIntegration/1.0 (admin@jgo.lucasfuentes.com)
+          EOF
+
+      - name: 📂 FTP Deploy via SamKirkland
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/__pycache__/**
+            **/*.pyc
+            **/uploads/**
+            **/outputs/**
+            **/venv/**
+            **/.venv/**
+            **/node_modules/**
+            **/ssh.txt
+            **/data ftp.txt
+            **/tiendanube_credentials.md
+            **/sync_edit.html
+            **/.env.example
 
-      - name: 📂 Rsync project to VPS
+      - name: ✅ Health Check
         run: |
-          ssh -o StrictHostKeyChecking=accept-new ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            mkdir -p /home/${{ secrets.VPS_USER }}/jgo-armeria
-          "
-          rsync -avz --delete \
-            --exclude '.git' \
-            --exclude '__pycache__' \
-            --exclude '*.pyc' \
-            --exclude '.env' \
-            --exclude 'uploads/' \
-            --exclude 'outputs/' \
-            --exclude 'venv/' \
-            --exclude '.venv/' \
-            ./ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/${{ secrets.VPS_USER }}/jgo-armeria/
-
-      - name: 🐍 Setup Python & Restart Service
-        run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            cd /home/${{ secrets.VPS_USER }}/jgo-armeria
-
-            # Create virtual env if missing
-            if [ ! -d venv ]; then
-              python3 -m venv venv
-            fi
-
-            # Activate and install dependencies
-            source venv/bin/activate
-            pip install -r requirements.txt --quiet
-
-            # Create runtime directories
-            mkdir -p uploads outputs
-
-            # Copy .env from secure location if exists
-            if [ -f /home/${{ secrets.VPS_USER }}/.env.jgo ]; then
-              cp /home/${{ secrets.VPS_USER }}/.env.jgo .env
-            fi
-
-            # Restart the service
-            sudo systemctl restart jgo-armeria 2>/dev/null || echo 'Service not yet installed — run setup.sh first'
-          "
-
-      - name: ✅ Health check
-        run: |
-          sleep 3
-          curl -sSf https://jgo.lucasfuentes.com/api/status || echo 'Warning: health check failed (may take a moment)'
+          sleep 5
+          curl -sSf https://jgo.lucasfuentes.com/api/status \
+            -o /dev/null -w "Status: %{http_code}\n" \
+            || echo "⚠️  Health check failed (app may still be starting / CPanel Python app not configured yet)"

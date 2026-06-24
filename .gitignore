@@ -6,6 +6,10 @@ __pycache__/
 
 # Credentials (contains API tokens!)
 tiendanube_credentials.md
+ssh.txt
+data ftp.txt
+jgo
+jgo.pub
 
 # Uploads & outputs
 uploads/*
