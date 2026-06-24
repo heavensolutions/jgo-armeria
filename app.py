@@ -124,6 +124,7 @@ def logout():
 
 
 @app.route("/")
+@app.route("")
 @optional_auth
 def dashboard():
     """Main dashboard."""
